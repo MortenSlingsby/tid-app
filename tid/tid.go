@@ -10,11 +10,8 @@ import (
 	"path/filepath"
   "fmt"
 
-	"github.com/jedib0t/go-pretty/v6/table"
-	// "github.com/jedib0t/go-pretty/v6/text"
 )
 
-// var db_path string = "/tid/tid.db"
 func db_path() string {
   homeDir, _ := os.UserHomeDir()
   db_path := filepath.Join(homeDir, ".tid", "tid.db")
@@ -120,24 +117,10 @@ func main() {
         Name:    "view",
         Usage:   "Show aggregated data",
         Action: func(cCtx *cli.Context) error {
-          t := table.NewWriter()
-          t.AppendRow(table.Row{1, "Arya", "Stark", 3000})
-          t.AppendRow(table.Row{20, "Jon", "Snow", 2000, "You know nothing, Jon Snow!"})
-          t.AppendRow([]interface{}{300, "Tyrion", "Lannister", 5000})
-          t.SetCaption("Simple Table with 3 Rows.\n")
-          fmt.Println(t.Render())
-          // sqliteDatabase, _ := sql.Open("sqlite3", db_path())
-          // updateQuery := `
-          //   UPDATE log
-          //   SET active = 0, end_time = ?
-          //   WHERE active = 1;
-          // `
-          // _, err := sqliteDatabase.Exec(updateQuery, now)
-          // if err != nil {
-          //     log.Fatal(err)
-          // }
-          // defer sqliteDatabase.Close()
-          // fmt.Println("End log for today")
+          sqliteDatabase, _ := sql.Open("sqlite3", db_path())
+          createTable(sqliteDatabase)
+          defer sqliteDatabase.Close()
+
           return nil
         },
       },
@@ -202,4 +185,4 @@ func valueExists(db *sql.DB, value string) (bool, error) {
 
     return exists, nil
 }
- SELECT code, sum(strftime('%s', end_time) - strftime('%s', start_time)) from log group by code;
+// SELECT code, sum(strftime('%s', end_time) - strftime('%s', start_time)) from log group by code;

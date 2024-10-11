@@ -62,15 +62,15 @@ func main() {
           now := time.Now().Format("2006-01-02 15:04:05")
           updateQuery := `
             UPDATE log
-            SET active = 0, end_time = ?
+            SET active = 0, end_time = ?, duration = strftime('%s', ?) - strftime('%s', start_time)
             WHERE active = 1;
           `
-          _, err := sqliteDatabase.Exec(updateQuery, now)
+          _, err := sqliteDatabase.Exec(updateQuery, now, now)
           if err != nil {
               log.Fatal(err)
           }
 
-          insertAO := `INSERT INTO log (code, start_time, end_time, active) VALUES (?, ?, ?, ?)`
+          insertAO := `INSERT INTO log (code, start_time, end_time, duration, active) VALUES (?, ?, ?, ?, ?)`
           exists, err := valueExists(sqliteDatabase, cCtx.Args().First()) 
           if !exists {
             log.Fatal("Code does not exist")
@@ -79,7 +79,7 @@ func main() {
             log.Fatal(err)
           }
           defer sqliteDatabase.Close()
-          _ , err = sqliteDatabase.Exec(insertAO, cCtx.Args().First(), now, "", 1)
+          _ , err = sqliteDatabase.Exec(insertAO, cCtx.Args().First(), now, "", "", 1)
           if err != nil {
             panic(err)
           }
@@ -101,10 +101,11 @@ func main() {
           now := time.Now().Format("2006-01-02 15:04:05")
           updateQuery := `
             UPDATE log
-            SET active = 0, end_time = ?
+            SET active = 0, end_time = ?, duration = strftime('%s', ?) - strftime('%s', start_time)
+
             WHERE active = 1;
           `
-          _, err := sqliteDatabase.Exec(updateQuery, now)
+          _, err := sqliteDatabase.Exec(updateQuery, now, now)
           if err != nil {
               log.Fatal(err)
           }
@@ -176,6 +177,7 @@ func initLog(db *sql.DB) {
 		"code" TEXT NOT NULL,		
 		"start_time" TEXT,
     "end_time" TEXT,
+    "duration" TEXT,
     "active" INTEGER
   );`
 
@@ -196,4 +198,3 @@ func valueExists(db *sql.DB, value string) (bool, error) {
 
     return exists, nil
 }
-// SELECT code, sum(strftime('%s', end_time) - strftime('%s', start_time)) from log group by code;

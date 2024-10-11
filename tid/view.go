@@ -10,6 +10,11 @@ import (
 	// "github.com/jedib0t/go-pretty/v6/text"
 )
 
+type AO struct {
+  tag string
+  description string
+}
+
 func createTable(db *sql.DB) {
   codes := get_codes(db)
   t := table.NewWriter()
@@ -103,5 +108,22 @@ func get_codes(db *sql.DB) []string {
       result = append(result, value)
   }
   return result
+}
+
+func showAO(db *sql.DB) {
+  rows, err := db.Query("SELECT * FROM AO")
+  if err != nil {
+    panic(err)
+  }
+  t := table.NewWriter()
+  for rows.Next() {
+    var aO AO
+    if err := rows.Scan(&aO.tag, &aO.description); err != nil {
+        panic(err)
+    }
+    t.AppendRow(table.Row{aO.tag, aO.description})
+  }
+  t.AppendHeader(table.Row{"Tag", "Description"})
+  fmt.Println(t.Render())
 }
 

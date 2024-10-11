@@ -9,6 +9,7 @@ import (
   "time"
 	"path/filepath"
   "fmt"
+  "strconv"
 
 )
 
@@ -118,8 +119,18 @@ func main() {
         Name:    "view",
         Usage:   "Show aggregated data",
         Action: func(cCtx *cli.Context) error {
+          var week int
+          if cCtx.NArg() > 0 {
+            i, err := strconv.Atoi(cCtx.Args().Get(0))
+            if err != nil {
+                panic(err)
+            }
+            week = -i*7+1
+          } else {
+            week = -6
+          }
           sqliteDatabase, _ := sql.Open("sqlite3", db_path())
-          createTable(sqliteDatabase)
+          createTable(sqliteDatabase, week)
           defer sqliteDatabase.Close()
 
           return nil

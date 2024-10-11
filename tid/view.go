@@ -15,21 +15,21 @@ type AO struct {
   description string
 }
 
-func createTable(db *sql.DB) {
-  codes := get_codes(db)
+func createTable(db *sql.DB, week int) {
+  codes := get_codes(db, week)
   t := table.NewWriter()
   for _, code := range codes {
-    row := calcRow(db, code)
+    row := calcRow(db, code, week)
     t.AppendRow(row)
   }
-  t.AppendHeader(calcHeader())
+  t.AppendHeader(calcHeader(week))
   fmt.Println(t.Render())
 }
 
-func get_first_day() time.Time {
+func get_first_day(week int) time.Time {
   now := time.Now()
   weekDay := int(now.Weekday())
-  return now.AddDate(0, 0, -weekDay-6)
+  return now.AddDate(0, 0, -weekDay+week)
 }
 
 func secondString(seconds int) string {
@@ -38,10 +38,10 @@ func secondString(seconds int) string {
     return fmt.Sprintf("%02d:%02d", hours, minutes)
 }
 
-func calcHeader() []interface{} {
+func calcHeader(week int) []interface{} {
   row := make([]interface{}, 8)
   row[0] = "AO" 
-  date := get_first_day()
+  date := get_first_day(week)
   for i := 0; i < 7; i++ {
     row[i+1] = fmt.Sprintf("%s\n%s", date.Format("02.01"), date.Weekday().String())
     date = date.AddDate(0,0,1)
@@ -49,10 +49,10 @@ func calcHeader() []interface{} {
   return row
 }
 
-func calcRow(db *sql.DB, code string) []interface{} {
+func calcRow(db *sql.DB, code string, week int) []interface{} {
   row := make([]interface{}, 8)
   row[0] = fullName(db, code)
-  date := get_first_day()
+  date := get_first_day(week)
   for i := 0; i < 7; i++ {
     row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02")))
     date = date.AddDate(0,0,1)
@@ -89,9 +89,9 @@ func fullName(db *sql.DB, code string) string {
   return result
 }
 
-func get_codes(db *sql.DB) []string {
+func get_codes(db *sql.DB, week int) []string {
   var result []string
-  first_date := get_first_day()
+  first_date := get_first_day(week)
   last_date := first_date.AddDate(0,0,7)
   query := "SELECT DISTINCT code FROM log WHERE start_time > ? and end_time < ?"
   rows, err := db.Query(query, first_date.Format("2006-01-02"), last_date.Format("2006-01-02"))

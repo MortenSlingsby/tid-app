@@ -185,6 +185,7 @@ func initAO(db *sql.DB) {
 
 func initLog(db *sql.DB) {
 	sqlLog := `CREATE TABLE IF NOT EXISTS log (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
 		"code" TEXT NOT NULL,		
 		"start_time" TEXT,
     "end_time" TEXT,

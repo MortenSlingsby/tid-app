@@ -15,6 +15,15 @@ type AO struct {
   description string
 }
 
+type Log struct {
+  tag string
+  description string
+  startTime string
+  endTime string
+  duration string
+  active string
+}
+
 func createTable(db *sql.DB, week int) {
   codes := get_codes(db, week)
   t := table.NewWriter()
@@ -40,7 +49,7 @@ func secondString(seconds int) string {
 
 func calcHeader(week int) []interface{} {
   row := make([]interface{}, 8)
-  row[0] = "AO" 
+  row[0] = "AO"
   date := get_first_day(week)
   for i := 0; i < 7; i++ {
     row[i+1] = fmt.Sprintf("%s\n%s", date.Format("02.01"), date.Weekday().String())
@@ -62,7 +71,7 @@ func calcRow(db *sql.DB, code string, week int) []interface{} {
 
 func calcVal(db *sql.DB, code string, date string) int {
   query := "SELECT sum(strftime('%s', end_time) - strftime('%s', start_time)) FROM log WHERE code = ? AND DATE(start_time) = ?"
-  
+
   var result sql.NullInt64
   err := db.QueryRow(query, code, date).Scan(&result)
   if err != nil {
@@ -101,7 +110,7 @@ func get_codes(db *sql.DB, week int) []string {
   defer rows.Close()
 
   for rows.Next() {
-      var value string 
+      var value string
       if err := rows.Scan(&value); err != nil {
           panic(err)
       }
@@ -127,3 +136,31 @@ func showAO(db *sql.DB) {
   fmt.Println(t.Render())
 }
 
+func showLog(db *sql.DB) {
+  now := time.Now().Format("2006-01-02")
+  rows, err := db.Query(`
+    select
+      l.code,
+      a.name,
+      l.start_time,
+      l.end_time,
+      printf('%02d:%02d', l.duration / 3600, (l.duration % 3600) / 60) as duration,
+      l.active
+    from log as l
+    inner join AO as a ON l.code = a.code
+    WHERE start_time > ?
+  `, now)
+  if err != nil {
+    panic(err)
+  }
+  t := table.NewWriter()
+  for rows.Next() {
+    var log Log
+    if err := rows.Scan(&log.tag, &log.description, &log.startTime, &log.endTime, &log.duration, &log.active); err != nil {
+        panic(err)
+    }
+    t.AppendRow(table.Row{log.tag, log.description, log.startTime, log.endTime, log.duration, log.active})
+  }
+  t.AppendHeader(table.Row{"Tag", "Description", "Start Time", "End time", "Duration", "Active"})
+  fmt.Println(t.Render())
+}

@@ -137,6 +137,17 @@ func main() {
         },
       },
 			{
+        Name:    "log",
+        Usage:   "Show todays log so far",
+        Action: func(cCtx *cli.Context) error {
+          sqliteDatabase, _ := sql.Open("sqlite3", db_path())
+          showLog(sqliteDatabase)
+          defer sqliteDatabase.Close()
+
+          return nil
+        },
+      },
+			{
         Name:    "list",
         Usage:   "List all AOs in the table",
         Action: func(cCtx *cli.Context) error {

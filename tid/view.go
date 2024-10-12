@@ -70,7 +70,7 @@ func calcRow(db *sql.DB, code string, week int) []interface{} {
 }
 
 func calcVal(db *sql.DB, code string, date string) int {
-  query := "SELECT sum(strftime('%s', end_time) - strftime('%s', start_time)) FROM log WHERE code = ? AND DATE(start_time) = ?"
+  query := "SELECT sum(duration) FROM log WHERE code = ? AND DATE(start_time) = ?"
 
   var result sql.NullInt64
   err := db.QueryRow(query, code, date).Scan(&result)
@@ -144,7 +144,7 @@ func showLog(db *sql.DB) {
       a.name,
       l.start_time,
       l.end_time,
-      printf('%02d:%02d', l.duration / 3600, (ABS(l.duration) % 3600) / 60) as duration,
+      printf('%s%02d:%02d', (CASE WHEN l.duration < 0 THEN '-' ELSE '' END), abs(l.duration) / 3600, (abs(l.duration) % 3600) / 60) as duration,
       l.active
     from log as l
     inner join AO as a ON l.code = a.code

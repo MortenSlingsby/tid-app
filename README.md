@@ -31,6 +31,13 @@ For å stoppe logging kjør:
 tid stop
 ```
 
+## Legg til custom tid eller fix feil tid
+Man kan ikke endre eksisterende logger, men du kan legge til custom timer som kan være både + og - timer med kommando: `tid fix <tag> <tid_i_minutt>`. Så hvis du har glemt å bytte tag fra A til B for en time siden så kan du legge til 1 minus time for A og 1 plus time for B for å fikse det. Det gjør man slik:
+```
+tid fix A -60
+tid fix B 60
+```
+
 ## Aggresso timeføring
 For å se aggregerte timene du jobbet per AO per dag kjør:
 ```

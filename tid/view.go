@@ -144,7 +144,7 @@ func showLog(db *sql.DB) {
       a.name,
       l.start_time,
       l.end_time,
-      printf('%02d:%02d', l.duration / 3600, (l.duration % 3600) / 60) as duration,
+      printf('%02d:%02d', l.duration / 3600, (ABS(l.duration) % 3600) / 60) as duration,
       l.active
     from log as l
     inner join AO as a ON l.code = a.code

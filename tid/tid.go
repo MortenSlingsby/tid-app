@@ -158,6 +158,31 @@ func main() {
           return nil
         },
       },
+			{
+        Name:    "fix",
+        Usage:   "Add custom duration to an AO",
+        Action: func(cCtx *cli.Context) error {
+          sqliteDatabase, _ := sql.Open("sqlite3", db_path())
+          duration, err := strconv.Atoi(cCtx.Args().Get(1)) 
+          duration_sec := duration * 60
+          now := time.Now().Format("2006-01-02 15:04:05")
+          if err != nil { panic(err) }
+          insertFix := `INSERT INTO log (code, start_time, end_time, duration, active) VALUES (?, ?, ?, ?, ?)`
+          defer sqliteDatabase.Close()
+          _ , err = sqliteDatabase.Exec(insertFix, cCtx.Args().First(), now, "fix", duration_sec, 0)
+          if err != nil {
+            panic(err)
+          }
+          fmt.Println("Added custom duration for", cCtx.Args().First(), "of", duration, "minutes")
+          return nil
+        },
+        Before: func(cCtx *cli.Context) error {
+          if cCtx.Args().Len() != 2 {
+            return fmt.Errorf("Expecting exactly 2 arguments: <tag> <duration_minutes>")
+          }
+          return nil
+        },
+      },
 		},
 	}
 	if fileExists(db_path()) {

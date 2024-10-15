@@ -44,7 +44,7 @@ func main() {
                 Usage:  "Full name of AO",
                 Aliases: []string{"f"},
                 Value: "",
-                Required: false,
+                Required: true,
             },
         },
         Before: func(cCtx *cli.Context) error {

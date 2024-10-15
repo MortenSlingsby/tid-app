@@ -51,5 +51,9 @@ For å se hvilke AOs som du har lagt til kjør du `tid list`
 ## Oversikt over log til i dag
 For å se hva du har logget så langt i dat kjør `tid log`
 
-## Drop log
-Man kan droppe en log med kommando `tid drop <log_id>`. Log id kan finnes ved å kjøre `tid log`
+## Drop entries 
+### Drop log
+Man kan droppe en log med kommando `tid drop --log <log_id>`. Log id kan finnes ved å kjøre `tid log`
+
+### Drop AO 
+Man kan droppe en AO med kommando `tid drop --AO <tag>`. AO tags kan finnes ved å kjøre `tid list`

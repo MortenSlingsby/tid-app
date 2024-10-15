@@ -72,7 +72,7 @@ func main() {
           }
 
           insertAO := `INSERT INTO log (code, start_time, end_time, duration, active) VALUES (?, ?, ?, ?, ?)`
-          exists, err := valueExists(sqliteDatabase, cCtx.Args().First()) 
+          exists, err := valueExists(sqliteDatabase, cCtx.Args().First())
           if !exists {
             log.Fatal("Code does not exist")
           }
@@ -160,20 +160,45 @@ func main() {
       },
 			{
         Name:    "drop",
-        Usage:   "Drop log entry based on ID",
+        Usage:   "Drop log or AO entry",
         Action: func(cCtx *cli.Context) error {
           sqliteDatabase, _ := sql.Open("sqlite3", db_path())
           defer sqliteDatabase.Close()
-
-          id, err := strconv.Atoi(cCtx.Args().First()) 
-          if err != nil { 
-            fmt.Println("You forgot to provide a log id")
+          
+          if cCtx.String("AO") != "" {
+            dropAO(sqliteDatabase, cCtx.String("AO"))
+            fmt.Println("Dropped AO with tag:",cCtx.String("AO"))
             return nil
-          }
-          dropLog(sqliteDatabase, id)
-          fmt.Println("Dropped log with ID:",id)
+          } 
+
+          if cCtx.String("log") != "" {
+            id, err := strconv.Atoi(cCtx.String("log"))
+            if err != nil {
+              panic(err)
+            }
+
+            dropLog(sqliteDatabase, id)
+            fmt.Println("Dropped log with ID:", cCtx.String("log"))
+            return nil
+          } 
+
+          fmt.Println("You forgot to provide a flag and log id or AO tag")
 
           return nil
+        },
+        Flags: []cli.Flag{
+            &cli.StringFlag{
+                Name:  "AO",
+                Usage:  "Tag of AO to drop",
+                Value: "",
+                Required: false,
+            },
+            &cli.StringFlag{
+                Name:  "log",
+                Usage:  "ID of to drop",
+                Value: "",
+                Required: false,
+            },
         },
       },
 			{
@@ -181,7 +206,7 @@ func main() {
         Usage:   "Add custom duration to an AO",
         Action: func(cCtx *cli.Context) error {
           sqliteDatabase, _ := sql.Open("sqlite3", db_path())
-          duration, err := strconv.Atoi(cCtx.Args().Get(1)) 
+          duration, err := strconv.Atoi(cCtx.Args().Get(1))
           duration_sec := duration * 60
           now := time.Now().Format("2006-01-02 15:04:05")
           if err != nil { panic(err) }
@@ -227,7 +252,7 @@ func fileExists(filename string) bool {
 
 func initAO(db *sql.DB) {
 	sqlAO := `CREATE TABLE IF NOT EXISTS AO (
-		"code" TEXT NOT NULL PRIMARY KEY,		
+		"code" TEXT NOT NULL PRIMARY KEY,
 		"name" TEXT
   );`
 
@@ -240,7 +265,7 @@ func initAO(db *sql.DB) {
 func initLog(db *sql.DB) {
 	sqlLog := `CREATE TABLE IF NOT EXISTS log (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-		"code" TEXT NOT NULL,		
+		"code" TEXT NOT NULL,
 		"start_time" TEXT,
     "end_time" TEXT,
     "duration" TEXT,

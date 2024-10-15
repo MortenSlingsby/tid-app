@@ -181,3 +181,13 @@ func dropLog(db *sql.DB, id int) string {
   }
   return result
 }
+
+func dropAO(db *sql.DB, id string) string {
+  query := "DELETE FROM AO WHERE code = ?"
+  var result string
+  _, err := db.Exec(query, id)
+  if err != nil {
+    panic(err)
+  }
+  return result
+}

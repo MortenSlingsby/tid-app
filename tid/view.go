@@ -16,6 +16,7 @@ type AO struct {
 }
 
 type Log struct {
+  id int
   tag string
   description string
   startTime string
@@ -140,6 +141,7 @@ func showLog(db *sql.DB) {
   now := time.Now().Format("2006-01-02")
   rows, err := db.Query(`
     select
+      l.id,
       l.code,
       a.name,
       l.start_time,
@@ -156,11 +158,11 @@ func showLog(db *sql.DB) {
   t := table.NewWriter()
   for rows.Next() {
     var log Log
-    if err := rows.Scan(&log.tag, &log.description, &log.startTime, &log.endTime, &log.duration, &log.active); err != nil {
+    if err := rows.Scan(&log.id, &log.tag, &log.description, &log.startTime, &log.endTime, &log.duration, &log.active); err != nil {
         panic(err)
     }
-    t.AppendRow(table.Row{log.tag, log.description, log.startTime, log.endTime, log.duration, log.active})
+    t.AppendRow(table.Row{log.id, log.tag, log.description, log.startTime, log.endTime, log.duration, log.active})
   }
-  t.AppendHeader(table.Row{"Tag", "Description", "Start Time", "End time", "Duration", "Active"})
+  t.AppendHeader(table.Row{"ID", "Tag", "Description", "Start Time", "End time", "Duration", "Active"})
   fmt.Println(t.Render())
 }

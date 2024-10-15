@@ -166,3 +166,13 @@ func showLog(db *sql.DB) {
   t.AppendHeader(table.Row{"ID", "Tag", "Description", "Start Time", "End time", "Duration", "Active"})
   fmt.Println(t.Render())
 }
+
+func dropLog(db *sql.DB, id int) string {
+  query := "DELETE FROM log WHERE id = ?"
+  var result string
+  _, err := db.Exec(query, id)
+  if err != nil {
+    panic(err)
+  }
+  return result
+}

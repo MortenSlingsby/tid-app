@@ -159,6 +159,24 @@ func main() {
         },
       },
 			{
+        Name:    "drop",
+        Usage:   "Drop log entry based on ID",
+        Action: func(cCtx *cli.Context) error {
+          sqliteDatabase, _ := sql.Open("sqlite3", db_path())
+          defer sqliteDatabase.Close()
+
+          id, err := strconv.Atoi(cCtx.Args().First()) 
+          if err != nil { 
+            fmt.Println("You forgot to provide a log id")
+            return nil
+          }
+          dropLog(sqliteDatabase, id)
+          fmt.Println("Dropped log with ID:",id)
+
+          return nil
+        },
+      },
+			{
         Name:    "fix",
         Usage:   "Add custom duration to an AO",
         Action: func(cCtx *cli.Context) error {

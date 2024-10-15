@@ -143,7 +143,8 @@ func main() {
           sqliteDatabase, _ := sql.Open("sqlite3", db_path())
           showLog(sqliteDatabase)
           defer sqliteDatabase.Close()
-
+          
+          todayTotalOut(sqliteDatabase)
           return nil
         },
       },

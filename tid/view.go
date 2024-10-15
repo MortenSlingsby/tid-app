@@ -7,7 +7,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	 "time"
 	"github.com/jedib0t/go-pretty/v6/table"
-	// "github.com/jedib0t/go-pretty/v6/text"
 )
 
 type AO struct {
@@ -172,6 +171,68 @@ func showLog(db *sql.DB) {
   fmt.Println(t.Render())
 }
 
+func todayTotalOut(db *sql.DB) {
+  total := secondString(todayTotalNonActive(db) + todayTotalActive(db))
+  expected := secondString(todayTotal(db))
+  out := fmt.Sprintf("You have logged %s out of a possible %s today", total, expected)
+  fmt.Println(out)
+}
+
+func todayTotalNonActive(db *sql.DB) int {
+  var sum int
+  now := time.Now().Format("2006-01-02")
+  err := db.QueryRow(`
+    select
+      sum(duration)
+    FROM log
+    WHERE start_time > ? AND active = 0
+  `, now).Scan(&sum)
+  if err != nil {
+    panic(err)
+  }
+
+  return sum
+}
+
+func todayTotalActive(db *sql.DB) int {
+  var sum sql.NullInt64
+  now := time.Now().Format("2006-01-02")
+  err := db.QueryRow(`
+    select
+        sum(strftime('%s', 'now', 'utc') - strftime('%s', start_time, 'utc'))
+    FROM log
+    WHERE start_time > ? AND active = 1
+  `, now).Scan(&sum)
+  if err != nil {
+    panic(err)
+  }
+
+  if sum.Valid {
+    return int(sum.Int64)
+  }
+  return 0
+}
+
+func todayTotal(db *sql.DB) int {
+  var sum sql.NullInt64
+  now := time.Now().Format("2006-01-02")
+  err := db.QueryRow(`
+    select
+        strftime('%s', 'now', 'utc') - strftime('%s', start_time, 'utc')
+    FROM log
+    WHERE start_time > ?
+    ORDER BY start_time ASC
+    LIMIT 1
+  `, now).Scan(&sum)
+  if err != nil {
+    panic(err)
+  }
+  if sum.Valid {
+    return int(sum.Int64)
+  }
+  return 0
+}
+
 func dropLog(db *sql.DB, id int) string {
   query := "DELETE FROM log WHERE id = ?"
   var result string
@@ -191,3 +252,4 @@ func dropAO(db *sql.DB, id string) string {
   }
   return result
 }
+

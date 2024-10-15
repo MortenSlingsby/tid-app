@@ -146,7 +146,12 @@ func showLog(db *sql.DB) {
       a.name,
       l.start_time,
       l.end_time,
-      printf('%s%02d:%02d', (CASE WHEN l.duration < 0 THEN '-' ELSE '' END), abs(l.duration) / 3600, (abs(l.duration) % 3600) / 60) as duration,
+      CASE
+        WHEN l.active = 0 THEN
+          printf('%s%02d:%02d', (CASE WHEN l.duration < 0 THEN '-' ELSE '' END), abs(l.duration) / 3600, (abs(l.duration) % 3600) / 60)
+        ELSE
+          printf('%02d:%02d', (strftime('%s', 'now', 'utc') - strftime('%s', l.start_time, 'utc')) / 3600, ((strftime('%s', 'now', 'utc') - strftime('%s', l.start_time, 'utc')) % 3600) / 60)
+      END as duration,
       l.active
     from log as l
     inner join AO as a ON l.code = a.code

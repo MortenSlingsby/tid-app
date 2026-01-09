@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"time"
+
 	"github.com/jedib0t/go-pretty/v6/table"
 	_ "github.com/mattn/go-sqlite3"
-	"time"
 )
 
 type AO struct {
@@ -102,7 +103,7 @@ func get_codes(db *sql.DB, week int) []string {
 	var result []string
 	first_date := get_first_day(week)
 	last_date := first_date.AddDate(0, 0, 7)
-	query := "SELECT DISTINCT code FROM log WHERE start_time > ? and end_time < ?"
+	query := "SELECT DISTINCT code FROM log WHERE start_time > ? and (end_time < ? OR end_time IS 'fix')"
 	rows, err := db.Query(query, first_date.Format("2006-01-02"), last_date.Format("2006-01-02"))
 	if err != nil {
 		panic(err)

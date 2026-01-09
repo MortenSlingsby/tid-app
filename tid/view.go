@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"time"
+
 	"github.com/jedib0t/go-pretty/v6/table"
 	_ "github.com/mattn/go-sqlite3"
-	"time"
 )
 
 type AO struct {
@@ -32,6 +33,7 @@ func createTable(db *sql.DB, week int) {
 		t.AppendRow(row)
 	}
 	t.AppendHeader(calcHeader(week))
+	t.AppendFooter(calcFooter(db, week))
 	fmt.Println(t.Render())
 }
 
@@ -42,9 +44,12 @@ func get_first_day(week int) time.Time {
 }
 
 func secondString(seconds int) string {
-	hours := seconds / 3600
-	minutes := (seconds % 3600) / 60
-	return fmt.Sprintf("%02d:%02d", hours, minutes)
+	hours := float64(seconds) / 3600
+
+	// hours := seconds / 3600
+	// minutes := (seconds % 3600) / 60
+
+	return fmt.Sprintf("%.2f", hours)
 }
 
 func calcHeader(week int) []interface{} {
@@ -58,22 +63,40 @@ func calcHeader(week int) []interface{} {
 	return row
 }
 
-func calcRow(db *sql.DB, code string, week int) []interface{} {
+func calcFooter(db *sql.DB, week int) []interface{} {
 	row := make([]interface{}, 8)
-	row[0] = fullName(db, code)
+	row[0] = "Total"
 	date := get_first_day(week)
 	for i := 0; i < 7; i++ {
-		row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02")))
+		row[i+1] = secondString(calcVal(db, "", date.Format("2006-01-02"), true))
 		date = date.AddDate(0, 0, 1)
 	}
 	return row
 }
 
-func calcVal(db *sql.DB, code string, date string) int {
-	query := "SELECT sum(duration) FROM log WHERE code = ? AND DATE(start_time) = ?"
+func calcRow(db *sql.DB, code string, week int) []interface{} {
+	row := make([]interface{}, 8)
+	row[0] = fullName(db, code)
+	date := get_first_day(week)
+	for i := 0; i < 7; i++ {
+		row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02"), false))
+		date = date.AddDate(0, 0, 1)
+	}
+	return row
+}
 
+func calcVal(db *sql.DB, code string, date string, total bool) int {
+	var query string
 	var result sql.NullInt64
-	err := db.QueryRow(query, code, date).Scan(&result)
+	var err error
+	if total {
+		query = "SELECT sum(duration) FROM log WHERE DATE(start_time) = ?"
+		err = db.QueryRow(query, date).Scan(&result)
+	} else {
+		query = "SELECT sum(duration) FROM log WHERE code = ? AND DATE(start_time) = ?"
+		err = db.QueryRow(query, code, date).Scan(&result)
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No rows were returned!")
@@ -102,7 +125,7 @@ func get_codes(db *sql.DB, week int) []string {
 	var result []string
 	first_date := get_first_day(week)
 	last_date := first_date.AddDate(0, 0, 7)
-	query := "SELECT DISTINCT code FROM log WHERE start_time > ? and end_time < ?"
+	query := "SELECT DISTINCT code FROM log WHERE start_time > ? and (end_time < ? OR end_time IS 'fix')"
 	rows, err := db.Query(query, first_date.Format("2006-01-02"), last_date.Format("2006-01-02"))
 	if err != nil {
 		panic(err)

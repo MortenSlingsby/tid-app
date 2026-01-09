@@ -33,6 +33,7 @@ func createTable(db *sql.DB, week int) {
 		t.AppendRow(row)
 	}
 	t.AppendHeader(calcHeader(week))
+	t.AppendFooter(calcFooter(db, week))
 	fmt.Println(t.Render())
 }
 
@@ -62,22 +63,40 @@ func calcHeader(week int) []interface{} {
 	return row
 }
 
-func calcRow(db *sql.DB, code string, week int) []interface{} {
+func calcFooter(db *sql.DB, week int) []interface{} {
 	row := make([]interface{}, 8)
-	row[0] = fullName(db, code)
+	row[0] = "Total"
 	date := get_first_day(week)
 	for i := 0; i < 7; i++ {
-		row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02")))
+		row[i+1] = secondString(calcVal(db, "", date.Format("2006-01-02"), true))
 		date = date.AddDate(0, 0, 1)
 	}
 	return row
 }
 
-func calcVal(db *sql.DB, code string, date string) int {
-	query := "SELECT sum(duration) FROM log WHERE code = ? AND DATE(start_time) = ?"
+func calcRow(db *sql.DB, code string, week int) []interface{} {
+	row := make([]interface{}, 8)
+	row[0] = fullName(db, code)
+	date := get_first_day(week)
+	for i := 0; i < 7; i++ {
+		row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02"), false))
+		date = date.AddDate(0, 0, 1)
+	}
+	return row
+}
 
+func calcVal(db *sql.DB, code string, date string, total bool) int {
+	var query string
 	var result sql.NullInt64
-	err := db.QueryRow(query, code, date).Scan(&result)
+	var err error
+	if total {
+		query = "SELECT sum(duration) FROM log WHERE DATE(start_time) = ?"
+		err = db.QueryRow(query, date).Scan(&result)
+	} else {
+		query = "SELECT sum(duration) FROM log WHERE code = ? AND DATE(start_time) = ?"
+		err = db.QueryRow(query, code, date).Scan(&result)
+	}
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No rows were returned!")

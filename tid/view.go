@@ -43,9 +43,12 @@ func get_first_day(week int) time.Time {
 }
 
 func secondString(seconds int) string {
-	hours := seconds / 3600
-	minutes := (seconds % 3600) / 60
-	return fmt.Sprintf("%02d:%02d", hours, minutes)
+	hours := float64(seconds) / 3600
+
+	// hours := seconds / 3600
+	// minutes := (seconds % 3600) / 60
+
+	return fmt.Sprintf("%.2f", hours)
 }
 
 func calcHeader(week int) []interface{} {

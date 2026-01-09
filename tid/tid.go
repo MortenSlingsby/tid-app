@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/urfave/cli/v2"
 )
 
 func db_path() string {
@@ -232,7 +233,7 @@ func main() {
 	}
 	if fileExists(db_path()) {
 		os.MkdirAll(filepath.Dir(db_path()), 0700)
-		create_database()
+		createDatabase()
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -240,7 +241,7 @@ func main() {
 	}
 }
 
-func create_database() {
+func createDatabase() {
 	sqliteDatabase, _ := sql.Open("sqlite3", db_path())
 	defer sqliteDatabase.Close()
 	initAO(sqliteDatabase)

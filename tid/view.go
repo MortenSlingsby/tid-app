@@ -26,7 +26,7 @@ type Log struct {
 }
 
 func createTable(db *sql.DB, week int) {
-	codes := get_codes(db, week)
+	codes := getCodes(db, week)
 	t := table.NewWriter()
 	for _, code := range codes {
 		row := calcRow(db, code, week)
@@ -37,7 +37,7 @@ func createTable(db *sql.DB, week int) {
 	fmt.Println(t.Render())
 }
 
-func get_first_day(week int) time.Time {
+func getFirstDay(week int) time.Time {
 	now := time.Now()
 	weekDay := int(now.Weekday())
 	return now.AddDate(0, 0, -weekDay+week)
@@ -52,33 +52,33 @@ func secondString(seconds int) string {
 	return fmt.Sprintf("%.2f", hours)
 }
 
-func calcHeader(week int) []interface{} {
-	row := make([]interface{}, 8)
+func calcHeader(week int) []any {
+	row := make([]any, 8)
 	row[0] = "AO"
-	date := get_first_day(week)
-	for i := 0; i < 7; i++ {
+	date := getFirstDay(week)
+	for i := range 7 {
 		row[i+1] = fmt.Sprintf("%s\n%s", date.Format("02.01"), date.Weekday().String())
 		date = date.AddDate(0, 0, 1)
 	}
 	return row
 }
 
-func calcFooter(db *sql.DB, week int) []interface{} {
-	row := make([]interface{}, 8)
+func calcFooter(db *sql.DB, week int) []any {
+	row := make([]any, 8)
 	row[0] = "Total"
-	date := get_first_day(week)
-	for i := 0; i < 7; i++ {
+	date := getFirstDay(week)
+	for i := range 7 {
 		row[i+1] = secondString(calcVal(db, "", date.Format("2006-01-02"), true))
 		date = date.AddDate(0, 0, 1)
 	}
 	return row
 }
 
-func calcRow(db *sql.DB, code string, week int) []interface{} {
-	row := make([]interface{}, 8)
+func calcRow(db *sql.DB, code string, week int) []any {
+	row := make([]any, 8)
 	row[0] = fullName(db, code)
-	date := get_first_day(week)
-	for i := 0; i < 7; i++ {
+	date := getFirstDay(week)
+	for i := range 7 {
 		row[i+1] = secondString(calcVal(db, code, date.Format("2006-01-02"), false))
 		date = date.AddDate(0, 0, 1)
 	}
@@ -121,12 +121,12 @@ func fullName(db *sql.DB, code string) string {
 	return result
 }
 
-func get_codes(db *sql.DB, week int) []string {
+func getCodes(db *sql.DB, week int) []string {
 	var result []string
-	first_date := get_first_day(week)
-	last_date := first_date.AddDate(0, 0, 7)
+	firstDate := getFirstDay(week)
+	lastDate := firstDate.AddDate(0, 0, 7)
 	query := "SELECT DISTINCT code FROM log WHERE start_time > ? and (end_time < ? OR end_time IS 'fix')"
-	rows, err := db.Query(query, first_date.Format("2006-01-02"), last_date.Format("2006-01-02"))
+	rows, err := db.Query(query, firstDate.Format("2006-01-02"), lastDate.Format("2006-01-02"))
 	if err != nil {
 		panic(err)
 	}

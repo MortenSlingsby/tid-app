@@ -33,6 +33,8 @@ func createTable(db *sql.DB, week int) {
 		t.AppendRow(row)
 	}
 	t.AppendHeader(calcHeader(week))
+	t.AppendFooter(calcFirstIn(db, week))
+	t.AppendFooter(calcLastOut(db, week))
 	t.AppendFooter(calcFooter(db, week))
 	fmt.Println(t.Render())
 }
@@ -254,6 +256,47 @@ func todayTotal(db *sql.DB) int {
 		return int(sum.Int64)
 	}
 	return 0
+}
+
+func calcFirstIn(db *sql.DB, week int) []any {
+	row := make([]any, 8)
+	row[0] = "First in"
+	date := getFirstDay(week)
+	for i := range 7 {
+		row[i+1] = getDayTimestamp(db, date.Format("2006-01-02"), true)
+		date = date.AddDate(0, 0, 1)
+	}
+	return row
+}
+
+func calcLastOut(db *sql.DB, week int) []any {
+	row := make([]any, 8)
+	row[0] = "Last out"
+	date := getFirstDay(week)
+	for i := range 7 {
+		row[i+1] = getDayTimestamp(db, date.Format("2006-01-02"), false)
+		date = date.AddDate(0, 0, 1)
+	}
+	return row
+}
+
+func getDayTimestamp(db *sql.DB, date string, first bool) string {
+	var result sql.NullString
+	var query string
+	if first {
+		query = "SELECT MIN(start_time) FROM log WHERE DATE(start_time) = ? AND end_time != 'fix'"
+	} else {
+		query = `SELECT MAX(CASE WHEN active = 1 THEN strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime') ELSE end_time END) FROM log WHERE DATE(start_time) = ? AND end_time != 'fix'`
+	}
+	err := db.QueryRow(query, date).Scan(&result)
+	if err != nil || !result.Valid {
+		return ""
+	}
+	t, err := time.Parse("2006-01-02 15:04:05", result.String)
+	if err != nil {
+		return ""
+	}
+	return t.Format("15:04")
 }
 
 func dropLog(db *sql.DB, id int) string {
